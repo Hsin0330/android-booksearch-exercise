@@ -8,4 +8,7 @@
     <color name="color_text_secondary">#ff727272</color>
     <color name="color_control_normal">#ffffffff</color>
 
+    <color name="color_edittext">#ffffffff</color>
+    <color name="color_edittext_hint">#4DFFFFFF</color>
+
 </resources>
