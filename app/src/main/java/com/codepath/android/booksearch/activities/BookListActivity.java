@@ -1,13 +1,16 @@
 package com.codepath.android.booksearch.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.codepath.android.booksearch.R;
 import com.codepath.android.booksearch.adapters.BookAdapter;
@@ -28,6 +31,7 @@ public class BookListActivity extends AppCompatActivity {
     private ListView lvBooks;
     private BookAdapter bookAdapter;
     private BookClient client;
+    private ProgressBar progressBarFooter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,15 +49,32 @@ public class BookListActivity extends AppCompatActivity {
         lvBooks.setAdapter(bookAdapter);
         // Fetch the data remotely
 //        fetchBooks("Oscar Wilde");
+
+        lvBooks.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Book book = bookAdapter.getItem(position);
+
+                Intent intent = new Intent(BookListActivity.this, BookDetailActivity.class);
+                intent.putExtra("book", book);
+
+                startActivity(intent);
+            }
+        });
+
+        setupListWithFooter();
     }
 
     // Executes an API call to the OpenLibrary search endpoint, parses the results
     // Converts them into an array of book objects and adds them to the adapter
     private void fetchBooks(String query) {
         client = new BookClient();
+
+        showProgressBar();
         client.getBooks(query, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                hideProgressBar();
                 try {
                     JSONArray docs;
                     if(response != null) {
@@ -77,6 +98,7 @@ public class BookListActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                hideProgressBar();
                 super.onFailure(statusCode, headers, responseString, throwable);
             }
         });
@@ -110,18 +132,26 @@ public class BookListActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+    public void setupListWithFooter() {
+        // Inflate the footer
+        View footer = getLayoutInflater().inflate(
+                R.layout.progress_bar, null);
+        // Find the progressbar within footer
+        progressBarFooter = (ProgressBar)
+                footer.findViewById(R.id.pbProgressAction);
+        // Add footer to ListView before setting adapter
+        lvBooks.addFooterView(footer);
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        hideProgressBar();
+    }
 
-        return super.onOptionsItemSelected(item);
+    // Show progress
+    public void showProgressBar() {
+        progressBarFooter.setVisibility(View.VISIBLE);
+    }
+
+    // Hide progress
+    public void hideProgressBar() {
+        progressBarFooter.setVisibility(View.GONE);
     }
 }
